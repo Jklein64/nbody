@@ -25,6 +25,14 @@ FetchContent_MakeAvailable(gif)
 add_library(gif INTERFACE)
 target_include_directories(gif INTERFACE ${gif_SOURCE_DIR})
 
+# (external) glm for vector types and operations
+FetchContent_Declare(
+	glm
+	GIT_REPOSITORY	https://github.com/g-truc/glm.git
+	GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e #refs/tags/1.0.1
+)
+FetchContent_MakeAvailable(glm)
+
 # library
 file(GLOB lib_files CONFIGURE_DEPENDS lib/*.cpp)
 add_library(lib ${lib_files})
@@ -34,4 +42,5 @@ target_compile_features(lib PUBLIC cxx_std_11)
 # serial executable
 file(GLOB src_files CONFIGURE_DEPENDS src/*.cpp src/*.h)
 add_executable(nbody ${src_files})
-target_link_libraries(nbody PUBLIC lib argparse gif)
+target_link_libraries(nbody PUBLIC lib)
+target_link_libraries(nbody PRIVATE argparse gif glm::glm)
