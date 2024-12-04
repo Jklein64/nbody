@@ -2,13 +2,10 @@
 
 #include <stddef.h>
 
+#include <glm/vec2.hpp>
 #include <vector>
 
 namespace nbody {
-
-typedef struct Particle {
-    float x, y;
-} Particle;
 
 struct SimParams {
     // width and height of simulation grid. particles have floating-point
@@ -28,10 +25,10 @@ struct SimParams {
 
 struct SimState {
     // this will need to change for Barnes-Hut
-    std::vector<Particle> particles;
+    std::vector<glm::vec2> particles;
 };
 
-void init(const SimParams& params, Particle (*sampler)());
+void init(const SimParams& params, glm::vec2 (*sampler)());
 void step(const SimParams& params, const SimState& state);
 void free(const SimState& state);
 
