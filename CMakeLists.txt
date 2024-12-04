@@ -1,10 +1,19 @@
 cmake_minimum_required(VERSION 3.19)
 
 project(nbody
-    VERSION 1.0
-    DESCRIPTION "Parallel N-body simulation with MPI and the Barnes Hut Algorithm"
-    LANGUAGES CXX
+VERSION 1.0
+DESCRIPTION "Parallel N-body simulation with MPI and the Barnes Hut Algorithm"
+LANGUAGES CXX
 )
+
+include(FetchContent)
+
+# (external) argparse library
+FetchContent_Declare(
+    argparse
+    GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+)
+FetchContent_MakeAvailable(argparse)
 
 # library
 file(GLOB lib_files lib/*.cpp)
@@ -15,4 +24,4 @@ target_compile_features(lib PUBLIC cxx_std_11)
 # serial executable
 file(GLOB src_files src/*.cpp src/*.h)
 add_executable(nbody ${src_files})
-target_link_libraries(nbody PUBLIC lib)
+target_link_libraries(nbody PUBLIC lib argparse)
