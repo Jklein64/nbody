@@ -26,12 +26,12 @@ add_library(gif INTERFACE)
 target_include_directories(gif INTERFACE ${gif_SOURCE_DIR})
 
 # library
-file(GLOB lib_files lib/*.cpp)
+file(GLOB lib_files CONFIGURE_DEPENDS lib/*.cpp)
 add_library(lib ${lib_files})
 target_include_directories(lib PUBLIC include)
 target_compile_features(lib PUBLIC cxx_std_11)
 
 # serial executable
-file(GLOB src_files src/*.cpp src/*.h)
+file(GLOB src_files CONFIGURE_DEPENDS src/*.cpp src/*.h)
 add_executable(nbody ${src_files})
 target_link_libraries(nbody PUBLIC lib argparse gif)
