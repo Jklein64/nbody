@@ -1,15 +1,19 @@
 #include "morton.h"
 
-morton_key_t morton_encode(size_t i, size_t j) {
+namespace morton {
+
+MortonKey encode(size_t i, size_t j) {
     // TODO
     return 0;
 }
 
-void morton_decode(morton_key_t k, size_t* i, size_t* j) {
+void decode(MortonKey k, size_t* i, size_t* j) {
     // TODO
 }
 
-int morton_compare(morton_key_t a, morton_key_t b) {
+int compare(MortonKey a, MortonKey b) {
     // TODO
     return 0;
 }
+
+}  // namespace morton

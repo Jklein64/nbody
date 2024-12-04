@@ -1,7 +1,38 @@
 #pragma once
 
-int main(int argc, char* argv[]);
+#include <stddef.h>
 
-void nbody_init();
-void nbody_step();
-void nbody_free();
+#include <vector>
+
+namespace nbody {
+
+typedef struct Particle {
+    float x, y;
+} Particle;
+
+struct SimParams {
+    // width and height of simulation grid. particles have floating-point
+    // locations that get truncated to grid cells when determining updates
+    size_t grid_width, grid_height;
+
+    // the number of particles to simulate
+    size_t particle_count;
+
+    // the number of iterations to run the simulation
+    size_t frame_count;
+
+    // every save_interval iterations, a frame of the output gif is written. if
+    // save_interval < 0, then no output gif is written.
+    int save_interval;
+};
+
+struct SimState {
+    // this will need to change for Barnes-Hut
+    std::vector<Particle> particles;
+};
+
+void init(const SimParams& params, Particle (*sampler)());
+void step(const SimParams& params, const SimState& state);
+void free(const SimState& state);
+
+}  // namespace nbody

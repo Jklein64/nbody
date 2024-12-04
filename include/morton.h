@@ -2,10 +2,14 @@
 
 #include <cstddef>
 
-typedef size_t morton_key_t;
+namespace morton {
 
-morton_key_t morton_encode(size_t i, size_t j);
+typedef size_t MortonKey;
 
-void morton_decode(morton_key_t k, size_t* i, size_t* j);
+MortonKey encode(size_t i, size_t j);
 
-int morton_compare(morton_key_t a, morton_key_t b);
+void decode(MortonKey k, size_t* i, size_t* j);
+
+int compare(MortonKey a, MortonKey b);
+
+}  // namespace morton
