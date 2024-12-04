@@ -40,3 +40,4 @@ For usage instructions.
 - https://periodicos.univali.br/index.php/acotb/article/view/19492
 - https://dl.acm.org/doi/10.1145/169627.169640
 - https://github.com/alexgbrandt/Parallel-NBody
+- https://compute.toys/view/683 (original inspiration)
