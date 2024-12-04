@@ -9,11 +9,20 @@ LANGUAGES CXX
 include(FetchContent)
 
 # (external) argparse library
-FetchContent_Declare(
-    argparse
+FetchContent_Declare(argparse
     GIT_REPOSITORY https://github.com/p-ranav/argparse.git
 )
 FetchContent_MakeAvailable(argparse)
+
+# (external) gif generation library
+# see https://stackoverflow.com/a/65620000
+FetchContent_Declare(gif
+    GIT_REPOSITORY https://github.com/charlietangora/gif-h.git
+)
+
+FetchContent_MakeAvailable(gif)
+add_library(gif INTERFACE)
+target_include_directories(gif INTERFACE ${gif_SOURCE_DIR})
 
 # library
 file(GLOB lib_files lib/*.cpp)
@@ -24,4 +33,4 @@ target_compile_features(lib PUBLIC cxx_std_11)
 # serial executable
 file(GLOB src_files src/*.cpp src/*.h)
 add_executable(nbody ${src_files})
-target_link_libraries(nbody PUBLIC lib argparse)
+target_link_libraries(nbody PUBLIC lib argparse gif)

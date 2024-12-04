@@ -1,6 +1,8 @@
 #include "nbody.h"
 #include <stdio.h>
+
 #include <argparse/argparse.hpp>
+#include <gif.h>
 
 int main(int argc, char* argv[]) {
     argparse::ArgumentParser program("nbody");
@@ -23,6 +25,17 @@ int main(int argc, char* argv[]) {
         std::cerr << program;
         std::exit(1);
     }
+
+    std::vector<uint8_t> black(w * h * 4, 0);
+	std::vector<uint8_t> white(w * h * 4, 255);
+	auto fileName = "bwgif.gif";
+	int delay = 100;
+	GifWriter g;
+	GifBegin(&g, fileName, w, h, delay);
+	GifWriteFrame(&g, black.data(), w, h, delay);
+	GifWriteFrame(&g, white.data(), w, h, delay);
+	GifEnd(&g);
+
 
     printf("Hello! Grid is %lux%lu\n", w, h);
     return 0;
