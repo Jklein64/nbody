@@ -6,6 +6,28 @@ Massively parallel N-body simulation, accelerated with the Barnes-Hut algorithm 
 
 This code takes grid size, particle count, frame count, and an interval as input and produces an animated gif showing how the particles would move over time. Grid cell indices refer to the centers of the cell, and particles have floating-point locations that get rounded to the containing cell during each update step.
 
+## Usage
+
+Make sure CMake is installed. From the project root, run
+
+```bash
+cmake -G Ninja -B build
+```
+
+Replace Ninja with another generator if you don't have Ninja. Then run
+
+```bash
+cmake --build build --target nbody
+```
+
+The executable is now built at `build/nbody`. Run
+
+```bash
+./build/nbody --help
+```
+
+For usage instructions.
+
 ## Tasks
 
 - [ ] Naive (order $n^2$) implementation
