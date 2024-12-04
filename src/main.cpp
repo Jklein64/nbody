@@ -1,9 +1,9 @@
 #include "main.h"
 
-#include <gif.h>
 #include <stdio.h>
 
 #include <argparse/argparse.hpp>
+#include <gif/gif.hpp>
 #include <glm/exponential.hpp>
 #include <glm/vec3.hpp>
 

@@ -23,6 +23,10 @@ FetchContent_Declare(gif
 )
 FetchContent_MakeAvailable(gif)
 add_library(gif INTERFACE)
+if(NOT EXISTS ${gif_SOURCE_DIR}/gif/gif.hpp)
+file(MAKE_DIRECTORY ${gif_SOURCE_DIR}/gif)
+file(RENAME ${gif_SOURCE_DIR}/gif.h ${gif_SOURCE_DIR}/gif/gif.hpp)
+endif()
 target_include_directories(gif INTERFACE ${gif_SOURCE_DIR})
 
 # (external) glm for vector types and operations
