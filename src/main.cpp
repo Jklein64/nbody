@@ -9,15 +9,6 @@
 
 #include "nbody.h"
 
-glm::vec3 sRGB_to_linear(glm::vec3 color) {
-    // https://compute.toys/view/683
-    auto higher = glm::pow((color + 0.055f) / 1.055f, glm::vec3(2.4));
-    auto lower = color / 12.92f;
-    return glm::vec3(color.x > 0.04045 ? higher.x : lower.x,
-                     color.x > 0.04045 ? higher.y : lower.y,
-                     color.x > 0.04045 ? higher.z : lower.z);
-}
-
 glm::vec3 inferno(float t) {
     // https://www.shadertoy.com/view/3lBXR3
     auto c0 = glm::vec3(0.00021894037, 0.0016510046, -0.019480899);
@@ -27,8 +18,14 @@ glm::vec3 inferno(float t) {
     auto c4 = glm::vec3(77.1629356994, -33.40235894, -81.80730926);
     auto c5 = glm::vec3(-71.319428245, 32.626064264, 73.209519858);
     auto c6 = glm::vec3(25.1311262248, -12.24266895, -23.07032500);
-    return sRGB_to_linear(
-        c0 + t * (c1 + t * (c2 + t * (c3 + t * (c4 + t * (c5 + t * c6))))));
+    // inline sRGB_to_linear from https://compute.toys/view/683
+    auto color =
+        c0 + t * (c1 + t * (c2 + t * (c3 + t * (c4 + t * (c5 + t * c6)))));
+    auto higher = glm::pow((color + 0.055f) / 1.055f, glm::vec3(2.4));
+    auto lower = color / 12.92f;
+    return glm::vec3(color.x > 0.04045 ? higher.x : lower.x,
+                     color.x > 0.04045 ? higher.y : lower.y,
+                     color.x > 0.04045 ? higher.z : lower.z);
 }
 
 int main(int argc, char *argv[]) {
