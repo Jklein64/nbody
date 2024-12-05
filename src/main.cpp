@@ -15,6 +15,8 @@
 
 float color_scale;
 
+const int GIF_DELAY = 10;
+
 /**
  * @brief Generates the color corresponding to the given value of t in the inferno
  * colormap (from matplotlib). t should be greater than zero, but can be arbitrarily
@@ -90,7 +92,7 @@ int main(int argc, char *argv[]) {
     });
 
     GifWriter gif_writer;
-    GifBegin(&gif_writer, "out.gif", params.grid_width, params.grid_height, 100);
+    GifBegin(&gif_writer, "out.gif", params.grid_width, params.grid_height, GIF_DELAY);
     sim.RegisterSaveHandler([&gif_writer, &params](auto densities) {
         std::vector<uint8_t> colors(densities.size() * 4, 0);
         for (size_t i = 0; i < densities.size(); i++) {
@@ -103,7 +105,7 @@ int main(int argc, char *argv[]) {
             colors[i * 4 + 3] = 255;
         }
         GifWriteFrame(&gif_writer, colors.data(), params.grid_width, params.grid_height,
-                      100);
+                      GIF_DELAY);
     });
 
     for (size_t i = 0; i < params.frame_count; i++) {

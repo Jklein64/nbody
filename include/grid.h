@@ -15,11 +15,12 @@ class Grid {
 
     Grid(size_t width, size_t height, float cell_width, float cell_height);
 
-    float get(size_t i, size_t j);
-    float get(std::pair<size_t, size_t> idx);
-    void set(size_t i, size_t j, float value);
-    void set(std::pair<size_t, size_t> idx, float value);
-    std::pair<size_t, size_t> snap(float x, float y);
+    float Get(size_t i, size_t j);
+    float Get(std::pair<size_t, size_t> idx);
+    void Set(size_t i, size_t j, float value);
+    void Set(std::pair<size_t, size_t> idx, float value);
+    void Clear();
+    std::pair<size_t, size_t> Snap(float x, float y);
     const std::vector<float>& ViewFlattened();
 
    private:
