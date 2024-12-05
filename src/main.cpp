@@ -1,9 +1,6 @@
-#include "main.h"
-
 #include <stdio.h>
 
 #include <argparse/argparse.hpp>
-#include <gif/gif.hpp>
 #include <glm/exponential.hpp>
 #include <glm/ext/scalar_common.hpp>
 #include <glm/gtc/constants.hpp>
@@ -12,30 +9,6 @@
 #include <random>
 
 #include "nbody.h"
-
-float color_scale;
-
-const int GIF_DELAY = 10;
-
-/**
- * @brief Generates the color corresponding to the given value of t in the inferno
- * colormap (from matplotlib). t should be greater than zero, but can be arbitrarily
- * large.
- *
- * @param t
- * @return glm::vec3
- */
-glm::vec3 inferno(float t) {
-    // https://www.shadertoy.com/view/3lBXR3
-    auto c0 = glm::vec3(0.00021894037, 0.0016510046, -0.019480899);
-    auto c1 = glm::vec3(0.10651341949, 0.5639564368, 3.9327123889);
-    auto c2 = glm::vec3(11.6024930825, -3.972853966, -15.94239411);
-    auto c3 = glm::vec3(-41.703996131, 17.436398882, 44.354145199);
-    auto c4 = glm::vec3(77.1629356994, -33.40235894, -81.80730926);
-    auto c5 = glm::vec3(-71.319428245, 32.626064264, 73.209519858);
-    auto c6 = glm::vec3(25.1311262248, -12.24266895, -23.07032500);
-    return c0 + t * (c1 + t * (c2 + t * (c3 + t * (c4 + t * (c5 + t * c6)))));
-}
 
 int main(int argc, char *argv[]) {
     nbody::SimParams params;
@@ -65,11 +38,9 @@ int main(int argc, char *argv[]) {
         .default_value(-1)
         .store_into(params.save_interval)
         .help("Number of frames between saves. Negative never saves");
-    program.add_argument("-c", "--color-scale").scan<'g', float>().default_value(3e3f);
 
     try {
         program.parse_args(argc, argv);
-        color_scale = program.get<float>("-c");
     } catch (const std::exception &err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
@@ -91,21 +62,8 @@ int main(int argc, char *argv[]) {
         return center + glm::vec2(r * glm::cos(th), r * glm::sin(th));
     });
 
-    GifWriter gif_writer;
-    GifBegin(&gif_writer, "out.gif", params.grid_width, params.grid_height, GIF_DELAY);
-    sim.RegisterSaveHandler([&gif_writer, &params](auto densities) {
-        std::vector<uint8_t> colors(densities.size() * 4, 0);
-        for (size_t i = 0; i < densities.size(); i++) {
-            // scale to be in [0, 1]
-            float t = 1.0f - glm::exp(-densities[i] * color_scale);
-            glm::vec3 color = glm::clamp(inferno(t), 0.0f, 1.0f);
-            colors[i * 4 + 0] = static_cast<uint8_t>(color.x * 255.0f);
-            colors[i * 4 + 1] = static_cast<uint8_t>(color.y * 255.0f);
-            colors[i * 4 + 2] = static_cast<uint8_t>(color.z * 255.0f);
-            colors[i * 4 + 3] = 255;
-        }
-        GifWriteFrame(&gif_writer, colors.data(), params.grid_width, params.grid_height,
-                      GIF_DELAY);
+    sim.RegisterSaveHandler([&params](auto particles, auto grid) {
+        /* TODO: do something with particle data, either SDL or write to text file */
     });
 
     for (size_t i = 0; i < params.frame_count; i++) {
@@ -115,8 +73,6 @@ int main(int argc, char *argv[]) {
             sim.Save();
         }
     }
-
-    GifEnd(&gif_writer);
 
     return 0;
 }

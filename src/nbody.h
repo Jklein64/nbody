@@ -37,20 +37,21 @@ struct SimParams {
     int save_interval;
 };
 
+typedef std::function<void(const std::vector<Particle>&, const grid::Grid&)> SaveHandler;
+
 class NBodySim {
    public:
     const SimParams& params;
     NBodySim(const SimParams& params, const std::function<glm::vec2()>& sampler);
     void Step();
     void Save();
-    void RegisterSaveHandler(std::function<void(const std::vector<float>&)> handler);
+    void RegisterSaveHandler(SaveHandler handler);
 
    private:
-    // this will need to change for Barnes-Hut
     std::vector<Particle> particles;
     grid::Grid grid;
-    size_t frame = 0;
-    std::function<void(const std::vector<float>&)> save_handler;
+
+    SaveHandler save_handler;
 };
 
 }  // namespace nbody
