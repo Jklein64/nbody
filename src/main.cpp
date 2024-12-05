@@ -10,7 +10,7 @@
 
 #include "nbody.h"
 
-const float COLOR_SCALE = 5;
+float color_scale;
 
 /**
  * @brief Generates the color corresponding to the given value of t in the inferno
@@ -21,8 +21,6 @@ const float COLOR_SCALE = 5;
  * @return glm::vec3
  */
 glm::vec3 inferno(float t) {
-    // scale t to be in [0, 1]
-    t = 1.0f - glm::exp(-t * COLOR_SCALE);
     // https://www.shadertoy.com/view/3lBXR3
     auto c0 = glm::vec3(0.00021894037, 0.0016510046, -0.019480899);
     auto c1 = glm::vec3(0.10651341949, 0.5639564368, 3.9327123889);
@@ -31,13 +29,7 @@ glm::vec3 inferno(float t) {
     auto c4 = glm::vec3(77.1629356994, -33.40235894, -81.80730926);
     auto c5 = glm::vec3(-71.319428245, 32.626064264, 73.209519858);
     auto c6 = glm::vec3(25.1311262248, -12.24266895, -23.07032500);
-    // inline sRGB_to_linear from https://compute.toys/view/683
-    auto color = c0 + t * (c1 + t * (c2 + t * (c3 + t * (c4 + t * (c5 + t * c6)))));
-    auto higher = glm::pow((color + 0.055f) / 1.055f, glm::vec3(2.4));
-    auto lower = color / 12.92f;
-    return glm::vec3(color.x > 0.04045 ? higher.x : lower.x,
-                     color.x > 0.04045 ? higher.y : lower.y,
-                     color.x > 0.04045 ? higher.z : lower.z);
+    return c0 + t * (c1 + t * (c2 + t * (c3 + t * (c4 + t * (c5 + t * c6)))));
 }
 
 int main(int argc, char *argv[]) {
@@ -68,9 +60,11 @@ int main(int argc, char *argv[]) {
         .default_value(-1)
         .store_into(params.save_interval)
         .help("Number of frames between saves. Negative never saves");
+    program.add_argument("-c", "--color-scale").scan<'g', float>().default_value(5.0f);
 
     try {
         program.parse_args(argc, argv);
+        color_scale = program.get<float>("-c");
     } catch (const std::exception &err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
@@ -82,10 +76,10 @@ int main(int argc, char *argv[]) {
     std::mt19937 gen{rd()};
     std::normal_distribution dist_x{
         static_cast<float>(params.grid_width) * params.cell_width / 2,
-        20.0f * params.cell_width};
+        10.0f * params.cell_width};
     std::normal_distribution dist_y{
         static_cast<float>(params.grid_height) * params.cell_height / 2,
-        20.0f * params.cell_height};
+        10.0f * params.cell_height};
 
     nbody::NBodySim sim(params, [&dist_x, &dist_y, &gen, &params] {
         float x = std::clamp(dist_x(gen), 0.0f,
@@ -98,22 +92,30 @@ int main(int argc, char *argv[]) {
     GifWriter gif_writer;
     GifBegin(&gif_writer, "out.gif", params.grid_width, params.grid_height, 100);
     sim.RegisterSaveHandler([&gif_writer, &params](auto floats) {
-        std::vector<uint8_t> colors(floats.size() * 4);
+        std::vector<uint8_t> colors(floats.size() * 4, 0);
         for (size_t i = 0; i < floats.size(); i++) {
-            glm::vec3 color = inferno(floats[i]);
-            colors.push_back(static_cast<uint8_t>(
-                floats[i]));  // static_cast<uint8_t>(color.x * 255.f);
-            colors.push_back(static_cast<uint8_t>(
-                floats[i]));  // static_cast<uint8_t>(color.y * 255.f);
-            colors.push_back(static_cast<uint8_t>(
-                floats[i]));  // static_cast<uint8_t>(color.z * 255.f);
-            colors.push_back(static_cast<uint8_t>(100));
+            // scale to be in [0, 1]
+            float max = *std::max_element(floats.begin(), floats.end());
+            // glm::vec3 color = inferno(1.0f - glm::exp(-floats[i] * COLOR_SCALE));
+            // glm::vec3 color = inferno(floats[i] / max);
+            // float t = floats[i] / max;
+            float t = 1.0f - glm::exp(-floats[i] / 5);
+            printf("%f, ", t);
+            uint8_t v = static_cast<uint8_t>(floats[i]);
+            colors[i * 4 + 0] = static_cast<uint8_t>(inferno(t).x * 255.0f);
+            colors[i * 4 + 1] = static_cast<uint8_t>(inferno(t).y * 255.0f);
+            colors[i * 4 + 2] = static_cast<uint8_t>(inferno(t).z * 255.0f);
+            colors[i * 4 + 3] = 255;
+            // colors.push_back(static_cast<uint8_t>(
+            //     floats[i]));  // static_cast<uint8_t>(color.x * 255.f);
+            // colors.push_back(static_cast<uint8_t>(
+            //     floats[i]));  // static_cast<uint8_t>(color.y * 255.f);
+            // colors.push_back(static_cast<uint8_t>(
+            //     floats[i]));  // static_cast<uint8_t>(color.z * 255.f);
+            // colors.push_back(static_cast<uint8_t>(255));
         }
         GifWriteFrame(&gif_writer, colors.data(), params.grid_width, params.grid_height,
                       100);
-        for (auto f : floats) {
-            printf("%.1f, ", f);
-        }
     });
 
     for (size_t i = 0; i < params.frame_count; i++) {
@@ -124,10 +126,8 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // GifEnd(&gif_writer);
-
-    // std::vector<uint8_t> black(params.grid_width * params.grid_height * 4, 0);
-    // std::vector<uint8_t> white(params.grid_width * params.grid_height * 4, 255);
+    std::vector<uint8_t> black(params.grid_width * params.grid_height * 4, 0);
+    std::vector<uint8_t> white(params.grid_width * params.grid_height * 4, 255);
     // auto fileName = "bwgif.gif";
     // int delay = 100;
     // GifWriteFrame(&gif_writer, black.data(), params.grid_width, params.grid_height,
