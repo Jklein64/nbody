@@ -15,8 +15,8 @@ void Grid::Set(std::pair<size_t, size_t> idx, float value) {
 }
 
 std::pair<size_t, size_t> Grid::Snap(float x, float y) {
-    return std::make_pair(static_cast<size_t>(y / scale - this->y),
-                          static_cast<size_t>(x / scale - this->x));
+    return std::make_pair(static_cast<size_t>((y - this->y) / scale),
+                          static_cast<size_t>((x - this->x) / scale));
 }
 
 size_t next_pow_two(size_t i) {
