@@ -6,10 +6,8 @@
 
 namespace grid {
 
-const float CELL_WIDTH = 1e12;
-const float CELL_HEIGHT = 1e12;
-
 struct Grid {
+    float scale;  // width and height of a cell
     size_t nrows, ncols;
     float x, y, width, height;
     std::vector<float> data;
@@ -29,7 +27,7 @@ struct Grid {
      * @param bx
      * @param by
      */
-    void Configure(float ax, float ay, float bx, float by);
+    void Configure(float scale, float ax, float ay, float bx, float by);
 };
 
 }  // namespace grid

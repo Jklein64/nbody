@@ -15,8 +15,8 @@ void Grid::Set(std::pair<size_t, size_t> idx, float value) {
 }
 
 std::pair<size_t, size_t> Grid::Snap(float x, float y) {
-    return std::make_pair(static_cast<size_t>(y / CELL_HEIGHT - this->y),
-                          static_cast<size_t>(x / CELL_WIDTH - this->x));
+    return std::make_pair(static_cast<size_t>(y / scale - this->y),
+                          static_cast<size_t>(x / scale - this->x));
 }
 
 size_t next_pow_two(size_t i) {
@@ -26,9 +26,10 @@ size_t next_pow_two(size_t i) {
     return nlz ? (1u << (32 - nlz)) : 0xffffffff;
 }
 
-void Grid::Configure(float ax, float ay, float bx, float by) {
-    size_t nrows_raw = (by - ay) / CELL_HEIGHT;
-    size_t ncols_raw = (bx - ax) / CELL_WIDTH;
+void Grid::Configure(float ax, float ay, float bx, float by, float scale) {
+    this->scale = scale;
+    size_t nrows_raw = (by - ay) / scale;
+    size_t ncols_raw = (bx - ax) / scale;
     // round up to smallest power of two
     nrows = next_pow_two(nrows_raw);
     ncols = next_pow_two(ncols_raw);

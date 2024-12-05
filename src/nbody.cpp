@@ -4,8 +4,9 @@
 
 namespace nbody {
 
-const float DELTA_TIME = 1.0f;  // / 20.0f;
-const float G = 1e14f;
+const float DELTA_TIME = 1 / 20.0f;
+const float G = 6.67430e-11f;
+const float GRID_SCALE = 2.9919574140000e13f;
 
 void bbox(const std::vector<Particle>& particles, float* ax, float* ay, float* bx,
           float* by) {
@@ -43,7 +44,7 @@ NBodySim::NBodySim(const SimParams& params, const std::function<glm::vec2()>& sa
     bbox(particles, &ax, &ay, &bx, &by);
 
     // initialize grid based on particles
-    grid.Configure(ax, ay, bx, by);
+    grid.Configure(GRID_SCALE, ax, ay, bx, by);
     for (size_t i = 0; i < params.particle_count; i++) {
         auto p = particles[i];
         auto idx = grid.Snap(p.position.x, p.position.y);
@@ -55,9 +56,8 @@ void NBodySim::Step() {
     // update grid
     float ax, ay, bx, by;
     bbox(particles, &ax, &ay, &bx, &by);
-    grid.Configure(ax, ay, bx, by);
-    for (size_t i = 0; i < params.particle_count; i++) {
-        Particle p = particles[i];
+    grid.Configure(GRID_SCALE, ax, ay, bx, by);
+    for (auto& p : particles) {
         auto idx = grid.Snap(p.position.x, p.position.y);
         grid.Set(idx, grid.Get(idx) + p.mass);
     }
