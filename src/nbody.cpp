@@ -12,17 +12,31 @@ NBodySim::NBodySim(const SimParams& params, const std::function<glm::vec2()>& sa
     // initialize particles
     particles.reserve(params.particle_count);
     for (size_t i = 0; i < params.particle_count; i++) {
-        particles.push_back(sampler());
+        auto x = sampler();
+        particles.push_back((Particle){// initial conditions. these matter!
+                                       .position = x,
+                                       .velocity = glm::vec2(0),
+                                       .acceleration = glm::vec2(0),
+                                       .mass = 0.35f / params.particle_count});
     }
 
     // initialize grid based on particles
     for (size_t i = 0; i < params.particle_count; i++) {
-        auto idx = grid.snap(particles[i].x, particles[i].y);
-        grid.set(idx, grid.get(idx) + 1.0f);
+        auto p = particles[i];
+        auto idx = grid.snap(p.position.x, p.position.y);
+        grid.set(idx, grid.get(idx) + p.mass);
     }
 }
 
-void NBodySim::Step() { frame++; }
+void NBodySim::Step() {
+    if (frame == 0) {
+        // need to kickstart the sim?
+
+    } else {
+    }
+
+    frame++;
+}
 
 void NBodySim::Save() { save_handler(grid.ViewFlattened()); }
 

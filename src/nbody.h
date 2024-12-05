@@ -10,6 +10,13 @@
 
 namespace nbody {
 
+typedef struct Particle {
+    float mass;
+    glm::vec2 position;
+    glm::vec2 velocity;
+    glm::vec2 acceleration;
+} Particle;
+
 struct SimParams {
     // number of rows and columns of the simulation grid. particles have floating-point
     // locations that get truncated to grid cells when determining updates
@@ -40,7 +47,7 @@ class NBodySim {
 
    private:
     // this will need to change for Barnes-Hut
-    std::vector<glm::vec2> particles;
+    std::vector<Particle> particles;
     grid::Grid grid;
     size_t frame = 0;
     std::function<void(const std::vector<float>&)> save_handler;

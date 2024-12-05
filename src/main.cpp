@@ -5,6 +5,9 @@
 #include <argparse/argparse.hpp>
 #include <gif/gif.hpp>
 #include <glm/exponential.hpp>
+#include <glm/ext/scalar_common.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/trigonometric.hpp>
 #include <glm/vec3.hpp>
 #include <random>
 
@@ -60,7 +63,7 @@ int main(int argc, char *argv[]) {
         .default_value(-1)
         .store_into(params.save_interval)
         .help("Number of frames between saves. Negative never saves");
-    program.add_argument("-c", "--color-scale").scan<'g', float>().default_value(5.0f);
+    program.add_argument("-c", "--color-scale").scan<'g', float>().default_value(3e3f);
 
     try {
         program.parse_args(argc, argv);
@@ -74,45 +77,30 @@ int main(int argc, char *argv[]) {
     // see https://en.cppreference.com/w/cpp/numeric/random/normal_distribution
     std::random_device rd{};
     std::mt19937 gen{rd()};
-    std::normal_distribution dist_x{
-        static_cast<float>(params.grid_width) * params.cell_width / 2,
-        10.0f * params.cell_width};
-    std::normal_distribution dist_y{
-        static_cast<float>(params.grid_height) * params.cell_height / 2,
-        10.0f * params.cell_height};
+    auto center =
+        glm::vec2(static_cast<float>(params.grid_width) * params.cell_width / 2,
+                  static_cast<float>(params.grid_height) * params.cell_height / 2);
+    std::uniform_real_distribution<float> dist_r(0, std::min(center.x, center.y));
+    std::uniform_real_distribution<float> dist_th(0, 2 * glm::pi<float>());
 
-    nbody::NBodySim sim(params, [&dist_x, &dist_y, &gen, &params] {
-        float x = std::clamp(dist_x(gen), 0.0f,
-                             static_cast<float>(params.grid_width) * params.cell_width);
-        float y = std::clamp(dist_y(gen), 0.0f,
-                             static_cast<float>(params.grid_height) * params.cell_height);
-        return glm::vec2(x, y);
+    nbody::NBodySim sim(params, [&dist_r, &dist_th, &gen, &params, &center] {
+        float r = dist_r(gen);
+        float th = dist_th(gen);
+        return center + glm::vec2(r * glm::cos(th), r * glm::sin(th));
     });
 
     GifWriter gif_writer;
     GifBegin(&gif_writer, "out.gif", params.grid_width, params.grid_height, 100);
-    sim.RegisterSaveHandler([&gif_writer, &params](auto floats) {
-        std::vector<uint8_t> colors(floats.size() * 4, 0);
-        for (size_t i = 0; i < floats.size(); i++) {
+    sim.RegisterSaveHandler([&gif_writer, &params](auto densities) {
+        std::vector<uint8_t> colors(densities.size() * 4, 0);
+        for (size_t i = 0; i < densities.size(); i++) {
             // scale to be in [0, 1]
-            float max = *std::max_element(floats.begin(), floats.end());
-            // glm::vec3 color = inferno(1.0f - glm::exp(-floats[i] * COLOR_SCALE));
-            // glm::vec3 color = inferno(floats[i] / max);
-            // float t = floats[i] / max;
-            float t = 1.0f - glm::exp(-floats[i] / 5);
-            printf("%f, ", t);
-            uint8_t v = static_cast<uint8_t>(floats[i]);
-            colors[i * 4 + 0] = static_cast<uint8_t>(inferno(t).x * 255.0f);
-            colors[i * 4 + 1] = static_cast<uint8_t>(inferno(t).y * 255.0f);
-            colors[i * 4 + 2] = static_cast<uint8_t>(inferno(t).z * 255.0f);
+            float t = 1.0f - glm::exp(-densities[i] * color_scale);
+            glm::vec3 color = glm::clamp(inferno(t), 0.0f, 1.0f);
+            colors[i * 4 + 0] = static_cast<uint8_t>(color.x * 255.0f);
+            colors[i * 4 + 1] = static_cast<uint8_t>(color.y * 255.0f);
+            colors[i * 4 + 2] = static_cast<uint8_t>(color.z * 255.0f);
             colors[i * 4 + 3] = 255;
-            // colors.push_back(static_cast<uint8_t>(
-            //     floats[i]));  // static_cast<uint8_t>(color.x * 255.f);
-            // colors.push_back(static_cast<uint8_t>(
-            //     floats[i]));  // static_cast<uint8_t>(color.y * 255.f);
-            // colors.push_back(static_cast<uint8_t>(
-            //     floats[i]));  // static_cast<uint8_t>(color.z * 255.f);
-            // colors.push_back(static_cast<uint8_t>(255));
         }
         GifWriteFrame(&gif_writer, colors.data(), params.grid_width, params.grid_height,
                       100);
@@ -126,15 +114,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    std::vector<uint8_t> black(params.grid_width * params.grid_height * 4, 0);
-    std::vector<uint8_t> white(params.grid_width * params.grid_height * 4, 255);
-    // auto fileName = "bwgif.gif";
-    // int delay = 100;
-    // GifWriteFrame(&gif_writer, black.data(), params.grid_width, params.grid_height,
-    // 100); GifWriteFrame(&gif_writer, white.data(), params.grid_width,
-    // params.grid_height, 100);
     GifEnd(&gif_writer);
 
-    printf("Hello! Grid is %lux%lu\n", params.grid_width, params.grid_height);
     return 0;
 }
