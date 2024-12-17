@@ -1,6 +1,6 @@
 #include "grid.h"
 
-namespace grid {
+namespace nbody {
 
 float Grid::Get(size_t i, size_t j) { return data[i * width + j]; }
 
@@ -14,9 +14,9 @@ void Grid::Set(std::pair<size_t, size_t> idx, float value) {
     return Grid::Set(idx.first, idx.second, value);
 }
 
-std::pair<size_t, size_t> Grid::Snap(float x, float y) {
-    return std::make_pair(static_cast<size_t>((y - this->y) / scale),
-                          static_cast<size_t>((x - this->x) / scale));
+std::pair<size_t, size_t> Grid::Snap(glm::vec2 pos) {
+    return std::make_pair(static_cast<size_t>((pos.y - this->y) / scale),
+                          static_cast<size_t>((pos.x - this->x) / scale));
 }
 
 size_t next_pow_two(size_t i) {
@@ -26,19 +26,19 @@ size_t next_pow_two(size_t i) {
     return nlz ? (1u << (32 - nlz)) : 0xffffffff;
 }
 
-void Grid::Configure(float ax, float ay, float bx, float by, float scale) {
+void Grid::Configure(float scale, glm::vec2 a, glm::vec2 b) {
     this->scale = scale;
-    size_t nrows_raw = (by - ay) / scale;
-    size_t ncols_raw = (bx - ax) / scale;
+    size_t nrows_raw = (b.y - a.y) / scale;
+    size_t ncols_raw = (b.x - a.x) / scale;
     // round up to smallest power of two
     nrows = next_pow_two(nrows_raw);
     ncols = next_pow_two(ncols_raw);
     // center the expanded grid around the bounding box
-    x = ax - (ncols - ncols_raw) / 2.0f;
-    y = ay - (nrows - nrows_raw) / 2.0f;
+    x = a.x - (ncols - ncols_raw) / 2.0f;
+    y = a.y - (nrows - nrows_raw) / 2.0f;
 
     data.clear();
     data.resize(nrows * ncols, 0.0f);
 }
 
-}  // namespace grid
+}  // namespace nbody

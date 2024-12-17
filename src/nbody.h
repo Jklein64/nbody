@@ -12,9 +12,7 @@ namespace nbody {
 
 typedef struct Particle {
     float mass;
-    glm::vec2 position;
-    glm::vec2 velocity;
-    glm::vec2 acceleration;
+    glm::vec2 pos;
 } Particle;
 
 struct SimParams {
@@ -28,28 +26,23 @@ struct SimParams {
 
     // the number of particles to simulate
     size_t particle_count;
-
-    // the number of iterations to run the simulation
-    size_t frame_count;
-
-    // every save_interval iterations, a frame of the output gif is written. if
-    // save_interval < 0, then no output gif is written.
-    int save_interval;
 };
 
-typedef std::function<void(const std::vector<Particle>&, const grid::Grid&)> SaveHandler;
+typedef std::function<void(const std::vector<Particle>&, const nbody::Grid&)> SaveHandler;
 
 class NBodySim {
    public:
     const SimParams& params;
-    NBodySim(const SimParams& params, const std::function<glm::vec2()>& sampler);
+    NBodySim(const SimParams& params, const std::function<Particle()>& sampler);
     void Step();
     void Save();
+    float CalcForceNaive(size_t i);
+    float CalcForceBarnesHut(size_t i);
     void RegisterSaveHandler(SaveHandler handler);
 
    private:
     std::vector<Particle> particles;
-    grid::Grid grid;
+    nbody::Grid grid;
 
     SaveHandler save_handler;
 };
