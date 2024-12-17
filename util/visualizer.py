@@ -1,5 +1,7 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 from matplotlib.ticker import ScalarFormatter
 import argparse
 import sys
@@ -30,8 +32,11 @@ def main(filenames):
         x, y, ax, ay, mass = particles.T
         size = 50 * (mass - np.min(mass)) / np.max(mass) + 5
         color = np.linalg.norm(np.stack([ax, ay]), axis=0)
-        plt.scatter(x, y, s=size, c=color)
-        quiver = plt.quiver(x, y, ax / color, ay / color, color, alpha=0.5)
+        # truncate the colormap so contrast against white is better
+        plasma = matplotlib.colormaps["plasma"]
+        plasma = ListedColormap(plasma.colors[: -len(plasma.colors) // 8])
+        plt.scatter(x, y, s=size, c=color, cmap=plasma)
+        quiver = plt.quiver(x, y, ax / color, ay / color, color, cmap=plasma, alpha=0.5)
         plt.title(f"particles and accelerations for {method} method")
         # move axis scaling into the labels
         # see https://stackoverflow.com/a/45766598
@@ -44,8 +49,8 @@ def main(filenames):
         y_scale = int(ax.yaxis.get_offset_text().get_text()[2:])
         ax.xaxis.offsetText.set_visible(False)
         ax.yaxis.offsetText.set_visible(False)
-        plt.xlabel(f"x coordinate (m $\\times 10^{{{x_scale}}}$)")
-        plt.ylabel(f"y coordinate (m $\\times 10^{{{y_scale}}}$)")
+        plt.xlabel(f"x coordinate ($m \\times 10^{{{x_scale}}}$)")
+        plt.ylabel(f"y coordinate ($m \\times 10^{{{y_scale}}}$)")
         plt.colorbar(quiver, label="acceleration ($m/s^2$)")
         plt.tight_layout()
         plt.savefig(outfile)
