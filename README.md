@@ -30,7 +30,8 @@ For usage instructions.
 
 ## Tasks
 
-- [ ] Naive (order $n^2$) implementation
+- [x] Naive (order $n^2$) implementation
+- [x] Visualization as particles with acceleration
 - [ ] Visualization as particle density heatmap
 - [ ] Barnes-Hut using Z-Morton-based quadtree
 - [ ] MPI shenanigans
