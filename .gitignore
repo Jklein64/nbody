@@ -5,3 +5,4 @@ out/*
 !out/.gitkeep
 .vscode/
 .cache
+venv
