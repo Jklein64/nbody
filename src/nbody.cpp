@@ -7,62 +7,66 @@ namespace nbody {
 const float G = 6.67430e-11f;
 const float GRID_SCALE = 2.9919574140000e13f;
 
-void bbox(const std::vector<Particle>& particles, glm::vec2* a, glm::vec2* b) {
+void bbox(const Particles& particles, glm::vec2* a, glm::vec2* b) {
     float x_min = std::numeric_limits<float>::max();
     float x_max = std::numeric_limits<float>::min();
     float y_min = std::numeric_limits<float>::max();
     float y_max = std::numeric_limits<float>::min();
-    for (auto& p : particles) {
-        x_min = std::min(x_min, p.pos.x);
-        x_max = std::max(x_max, p.pos.x);
-        y_min = std::min(y_min, p.pos.y);
-        y_max = std::max(y_max, p.pos.y);
+    for (auto& pos : particles.pos) {
+        x_min = std::min(x_min, pos.x);
+        x_max = std::max(x_max, pos.x);
+        y_min = std::min(y_min, pos.y);
+        y_max = std::max(y_max, pos.y);
     }
 
     *a = glm::vec2(x_min, y_min);
     *b = glm::vec2(x_max, y_max);
 }
 
-NBodySim::NBodySim(const SimParams& params, const std::function<Particle()>& sampler)
+NBodySim::NBodySim(const SimParams& params,
+                   const std::function<std::pair<glm::vec2, float>()>& sampler)
     : params(params) {
     // initialize particles
-    particles.reserve(params.particle_count);
+    particles.pos.reserve(params.particle_count);
+    particles.mass.reserve(params.particle_count);
+    particles.accel.resize(params.particle_count);
     for (size_t i = 0; i < params.particle_count; i++) {
-        auto p = sampler();
-        particles.push_back(p);
+        auto [pos, mass] = sampler();
+        particles.pos.push_back(pos);
+        particles.mass.push_back(mass);
     }
 }
 
 void NBodySim::Step() {
-    for (size_t i = 0; i < particles.size(); ++i) {
+    for (size_t i = 0; i < params.particle_count; ++i) {
         // compute force that this particle receives
-        float f = 0.0f;
+        glm::vec2 accel = glm::vec2();
         if (params.method == Method::kNaive) {
-            f = CalcForceNaive(i);
+            accel = CalcAccelNaive(i);
         } else {
-            f = CalcForceBarnesHut(i);
+            accel = CalcAccelBarnesHut(i);
         }
 
+        particles.accel[i] = accel;
         // in theory, leapfrog integration would go here
     }
 }
 
-float NBodySim::CalcForceNaive(size_t i) {
-    float force = 0.0f;
-    for (size_t j = 0; j < particles.size(); ++j) {
+glm::vec2 NBodySim::CalcAccelNaive(size_t i) {
+    glm::vec2 accel = glm::vec2();
+    for (size_t j = 0; j < params.particle_count; ++j) {
         if (j == i) continue;
-        auto p1 = particles[i];
-        auto p2 = particles[j];
-        float r_squared = (p1.pos.x - p2.pos.x) * (p1.pos.x - p2.pos.x) +
-                          (p1.pos.y - p2.pos.y) * (p1.pos.y - p2.pos.y);
-        force += G * p1.mass * p2.mass / r_squared;
+        auto p1 = particles.pos[i];
+        auto p2 = particles.pos[j];
+        float r_squared = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+        accel += (G * particles.mass[j] / r_squared) * glm::normalize(p2 - p1);
     }
 
-    return force;
+    return accel;
 }
 
-float NBodySim::CalcForceBarnesHut(size_t i) {
-    float force = 0.0f;
+glm::vec2 NBodySim::CalcAccelBarnesHut(size_t i) {
+    glm::vec2 accel;
 
     // bounding box coords (origin is in the top left)
     glm::vec2 a, b;
@@ -71,16 +75,15 @@ float NBodySim::CalcForceBarnesHut(size_t i) {
     // initialize grid based on particles
     grid.Configure(GRID_SCALE, a, b);
     for (size_t i = 0; i < params.particle_count; i++) {
-        auto p = particles[i];
-        auto idx = grid.Snap(p.pos);
-        grid.Set(idx, grid.Get(idx) + p.mass);
+        auto idx = grid.Snap(particles.pos[i]);
+        grid.Set(idx, grid.Get(idx) + particles.mass[i]);
     }
 
     // TODO build quadtree on grid
 
     // TODO use quadtree to compute force
 
-    return force;
+    return accel;
 }
 
 void NBodySim::Save() { save_handler(particles, grid); }

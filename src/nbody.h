@@ -12,10 +12,11 @@
 
 namespace nbody {
 
-typedef struct Particle {
-    float mass;
-    glm::vec2 pos;
-} Particle;
+typedef struct Particles {
+    std::vector<float> mass;
+    std::vector<glm::vec2> pos;
+    std::vector<glm::vec2> accel;
+} Particles;
 
 enum class Method { kNaive, kBarnesHut };
 
@@ -35,20 +36,21 @@ struct SimParams {
     Method method;
 };
 
-typedef std::function<void(const std::vector<Particle>&, const nbody::Grid&)> SaveHandler;
+typedef std::function<void(const Particles&, const nbody::Grid&)> SaveHandler;
 
 class NBodySim {
    public:
     const SimParams& params;
-    NBodySim(const SimParams& params, const std::function<Particle()>& sampler);
+    NBodySim(const SimParams& params,
+             const std::function<std::pair<glm::vec2, float>()>& sampler);
     void Step();
     void Save();
-    float CalcForceNaive(size_t i);
-    float CalcForceBarnesHut(size_t i);
+    glm::vec2 CalcAccelNaive(size_t i);
+    glm::vec2 CalcAccelBarnesHut(size_t i);
     void RegisterSaveHandler(SaveHandler handler);
 
    private:
-    std::vector<Particle> particles;
+    Particles particles;
     nbody::Grid grid;
 
     SaveHandler save_handler;

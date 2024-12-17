@@ -17,30 +17,23 @@ class ParticleGenerator {
     // see https://en.cppreference.com/w/cpp/numeric/random/normal_distribution
     std::random_device rd{};
     std::mt19937 gen{rd()};
-    glm::vec2 center;
 
     std::uniform_real_distribution<float> uniform_r;
     std::uniform_real_distribution<float> uniform_theta;
     std::uniform_real_distribution<float> uniform_mass;
 
-    glm::vec2 calc_center(const nbody::SimParams &params) {
-        return glm::vec2(static_cast<float>(params.grid_width) * params.cell_width / 2,
-                         static_cast<float>(params.grid_height) * params.cell_height / 2);
-    }
-
    public:
     ParticleGenerator(const nbody::SimParams &params)
-        : center(calc_center(params)),
-          uniform_r(0, std::min(center.x, center.y)),
+        : uniform_r(0, 4e10),
           uniform_theta(0, 2 * glm::pi<float>()),
           uniform_mass(1e21, 1e30) {}
 
-    nbody::Particle sample() {
+    std::pair<glm::vec2, float> sample() {
         float r = uniform_r(gen);
         float theta = uniform_theta(gen);
         float mass = uniform_mass(gen);
-        glm::vec2 pos = center + glm::vec2(r * glm::cos(theta), r * glm::sin(theta));
-        return (nbody::Particle){.mass = mass, .pos = pos};
+        glm::vec2 pos = glm::vec2(r * glm::cos(theta), r * glm::sin(theta));
+        return std::make_pair(pos, mass);
     };
 };
 
@@ -97,8 +90,7 @@ int main(int argc, char *argv[]) {
 
     int trial_number = 0;
     sim.RegisterSaveHandler(
-        [&params, &trial_number](std::vector<nbody::Particle> particles,
-                                 nbody::Grid grid) {
+        [&params, &trial_number](nbody::Particles particles, nbody::Grid grid) {
             // create filename with date, time, and trial number
             auto time = std::time(nullptr);
             std::stringstream ss;
@@ -113,16 +105,18 @@ int main(int argc, char *argv[]) {
             std::ofstream outfile;
             outfile.open(filename);
             outfile << to_string(params.method) << std::endl;
-            outfile << particles.size() << std::endl;
+            outfile << params.particle_count << std::endl;
             outfile << grid.x << " ";
             outfile << grid.y << " ";
             outfile << grid.width << " ";
             outfile << grid.height;
             outfile << std::endl;
-            for (const auto &p : particles) {
-                outfile << p.pos.x << " ";
-                outfile << p.pos.y << " ";
-                outfile << p.mass << " ";
+            for (size_t i = 0; i < params.particle_count; ++i) {
+                outfile << particles.pos[i].x << " ";
+                outfile << particles.pos[i].y << " ";
+                outfile << particles.accel[i].x << " ";
+                outfile << particles.accel[i].y << " ";
+                outfile << particles.mass[i] << " ";
                 outfile << std::endl;
             }
             outfile.close();
