@@ -2,20 +2,23 @@
 
 #include <stddef.h>
 
+#include <cstdlib>
 #include <functional>
 #include <glm/vec2.hpp>
+#include <string>
 #include <vector>
 
 #include "grid.h"
 
 namespace nbody {
 
-typedef struct Particle {
-    float mass;
-    glm::vec2 position;
-    glm::vec2 velocity;
-    glm::vec2 acceleration;
-} Particle;
+typedef struct Particles {
+    std::vector<float> mass;
+    std::vector<glm::vec2> pos;
+    std::vector<glm::vec2> accel;
+} Particles;
+
+enum class Method { kNaive, kBarnesHut };
 
 struct SimParams {
     // number of rows and columns of the simulation grid. particles have floating-point
@@ -29,28 +32,40 @@ struct SimParams {
     // the number of particles to simulate
     size_t particle_count;
 
-    // the number of iterations to run the simulation
-    size_t frame_count;
-
-    // every save_interval iterations, a frame of the output gif is written. if
-    // save_interval < 0, then no output gif is written.
-    int save_interval;
+    // the algorithm to use for steps
+    Method method;
 };
+
+typedef std::function<void(const Particles&, const nbody::Grid&)> SaveHandler;
 
 class NBodySim {
    public:
     const SimParams& params;
-    NBodySim(const SimParams& params, const std::function<glm::vec2()>& sampler);
+    NBodySim(const SimParams& params,
+             const std::function<std::pair<glm::vec2, float>()>& sampler);
     void Step();
     void Save();
-    void RegisterSaveHandler(std::function<void(const std::vector<float>&)> handler);
+    glm::vec2 CalcAccelNaive(size_t i);
+    glm::vec2 CalcAccelBarnesHut(size_t i);
+    void RegisterSaveHandler(SaveHandler handler);
 
    private:
-    // this will need to change for Barnes-Hut
-    std::vector<Particle> particles;
-    grid::Grid grid;
-    size_t frame = 0;
-    std::function<void(const std::vector<float>&)> save_handler;
+    Particles particles;
+    nbody::Grid grid;
+
+    SaveHandler save_handler;
 };
 
 }  // namespace nbody
+
+inline std::string to_string(nbody::Method m) {
+    switch (m) {
+        case nbody::Method::kNaive:
+            return "naive";
+        case nbody::Method::kBarnesHut:
+            return "barnes-hut";
+        default:
+            // unreachable
+            exit(EXIT_FAILURE);
+    }
+}

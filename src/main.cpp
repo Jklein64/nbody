@@ -1,9 +1,8 @@
-#include "main.h"
-
 #include <stdio.h>
 
 #include <argparse/argparse.hpp>
-#include <gif/gif.hpp>
+#include <cstdlib>
+#include <fstream>
 #include <glm/exponential.hpp>
 #include <glm/ext/scalar_common.hpp>
 #include <glm/gtc/constants.hpp>
@@ -11,35 +10,42 @@
 #include <glm/vec3.hpp>
 #include <random>
 
+#include "grid.h"
 #include "nbody.h"
 
-float color_scale;
+class ParticleGenerator {
+    // see https://en.cppreference.com/w/cpp/numeric/random/normal_distribution
+    std::random_device rd{};
+    std::mt19937 gen{rd()};
 
-const int GIF_DELAY = 10;
+    std::uniform_real_distribution<float> uniform_r;
+    std::uniform_real_distribution<float> uniform_theta;
+    std::uniform_real_distribution<float> uniform_mass;
 
-/**
- * @brief Generates the color corresponding to the given value of t in the inferno
- * colormap (from matplotlib). t should be greater than zero, but can be arbitrarily
- * large.
- *
- * @param t
- * @return glm::vec3
- */
-glm::vec3 inferno(float t) {
-    // https://www.shadertoy.com/view/3lBXR3
-    auto c0 = glm::vec3(0.00021894037, 0.0016510046, -0.019480899);
-    auto c1 = glm::vec3(0.10651341949, 0.5639564368, 3.9327123889);
-    auto c2 = glm::vec3(11.6024930825, -3.972853966, -15.94239411);
-    auto c3 = glm::vec3(-41.703996131, 17.436398882, 44.354145199);
-    auto c4 = glm::vec3(77.1629356994, -33.40235894, -81.80730926);
-    auto c5 = glm::vec3(-71.319428245, 32.626064264, 73.209519858);
-    auto c6 = glm::vec3(25.1311262248, -12.24266895, -23.07032500);
-    return c0 + t * (c1 + t * (c2 + t * (c3 + t * (c4 + t * (c5 + t * c6)))));
-}
+   public:
+    ParticleGenerator(const nbody::SimParams &params)
+        : uniform_r(0, 4e10),
+          uniform_theta(0, 2 * glm::pi<float>()),
+          uniform_mass(1e21, 1e30) {}
+
+    std::pair<glm::vec2, float> sample() {
+        float r = uniform_r(gen);
+        float theta = uniform_theta(gen);
+        float mass = uniform_mass(gen);
+        glm::vec2 pos = glm::vec2(r * glm::cos(theta), r * glm::sin(theta));
+        return std::make_pair(pos, mass);
+    };
+};
 
 int main(int argc, char *argv[]) {
     nbody::SimParams params;
+    int num_trials = 0;
+    std::string method_string;
     argparse::ArgumentParser program("nbody");
+    program.add_argument("-m", "--method")
+        .default_value("naive")
+        .store_into(method_string)
+        .help("Method to use, either naive or barnes-hut.");
     program.add_argument("-w", "--grid-width")
         .scan<'i', size_t>()
         .default_value<size_t>(100)
@@ -55,68 +61,74 @@ int main(int argc, char *argv[]) {
         .default_value<size_t>(10)
         .store_into(params.particle_count)
         .help("The number of particles to simulate.");
-    program.add_argument("--frame-count")
-        .scan<'i', size_t>()
-        .default_value<size_t>(1000)
-        .store_into(params.frame_count)
-        .help("The number of frames to simulate.");
-    program.add_argument("--save-interval")
+    program.add_argument("--num_trials")
         .scan<'i', int>()
-        .default_value(-1)
-        .store_into(params.save_interval)
-        .help("Number of frames between saves. Negative never saves");
-    program.add_argument("-c", "--color-scale").scan<'g', float>().default_value(3e3f);
+        .default_value(1)
+        .store_into(num_trials)
+        .help("The number of trials to run to determine runtime.");
 
     try {
         program.parse_args(argc, argv);
-        color_scale = program.get<float>("-c");
     } catch (const std::exception &err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
-        std::exit(1);
+        std::exit(EXIT_FAILURE);
     }
 
-    // see https://en.cppreference.com/w/cpp/numeric/random/normal_distribution
-    std::random_device rd{};
-    std::mt19937 gen{rd()};
-    auto center =
-        glm::vec2(static_cast<float>(params.grid_width) * params.cell_width / 2,
-                  static_cast<float>(params.grid_height) * params.cell_height / 2);
-    std::uniform_real_distribution<float> dist_r(0, std::min(center.x, center.y));
-    std::uniform_real_distribution<float> dist_th(0, 2 * glm::pi<float>());
+    // handle method string
+    if (method_string == "naive") {
+        params.method = nbody::Method::kNaive;
+    } else if (method_string == "barnes-hut") {
+        params.method = nbody::Method::kBarnesHut;
+    } else {
+        fprintf(stderr, "Unknown method %s", method_string.c_str());
+        exit(EXIT_FAILURE);
+    }
 
-    nbody::NBodySim sim(params, [&dist_r, &dist_th, &gen, &params, &center] {
-        float r = dist_r(gen);
-        float th = dist_th(gen);
-        return center + glm::vec2(r * glm::cos(th), r * glm::sin(th));
-    });
+    auto gen = ParticleGenerator(params);
+    nbody::NBodySim sim(params, std::bind(&ParticleGenerator::sample, &gen));
 
-    GifWriter gif_writer;
-    GifBegin(&gif_writer, "out.gif", params.grid_width, params.grid_height, GIF_DELAY);
-    sim.RegisterSaveHandler([&gif_writer, &params](auto densities) {
-        std::vector<uint8_t> colors(densities.size() * 4, 0);
-        for (size_t i = 0; i < densities.size(); i++) {
-            // scale to be in [0, 1]
-            float t = 1.0f - glm::exp(-densities[i] * color_scale);
-            glm::vec3 color = glm::clamp(inferno(t), 0.0f, 1.0f);
-            colors[i * 4 + 0] = static_cast<uint8_t>(color.x * 255.0f);
-            colors[i * 4 + 1] = static_cast<uint8_t>(color.y * 255.0f);
-            colors[i * 4 + 2] = static_cast<uint8_t>(color.z * 255.0f);
-            colors[i * 4 + 3] = 255;
-        }
-        GifWriteFrame(&gif_writer, colors.data(), params.grid_width, params.grid_height,
-                      GIF_DELAY);
-    });
+    int trial_number = 0;
+    sim.RegisterSaveHandler(
+        [&params, &trial_number](nbody::Particles particles, nbody::Grid grid) {
+            // create filename with date, time, and trial number
+            auto time = std::time(nullptr);
+            std::stringstream ss;
+            ss << "out/";
+            // see https://stackoverflow.com/a/45419863
+            ss << std::put_time(std::gmtime(&time), "%F %T") << " " << trial_number;
+            ss << ".out";
+            std::string filename = ss.str();
 
-    for (size_t i = 0; i < params.frame_count; i++) {
+            // create file and save data
+            printf("saving to file at \"%s\"\n", filename.c_str());
+            std::ofstream outfile;
+            outfile.open(filename);
+            outfile << to_string(params.method) << std::endl;
+            outfile << params.particle_count << std::endl;
+            outfile << grid.x << " ";
+            outfile << grid.y << " ";
+            outfile << grid.width << " ";
+            outfile << grid.height;
+            outfile << std::endl;
+            for (size_t i = 0; i < params.particle_count; ++i) {
+                outfile << particles.pos[i].x << " ";
+                outfile << particles.pos[i].y << " ";
+                outfile << particles.accel[i].x << " ";
+                outfile << particles.accel[i].y << " ";
+                outfile << particles.mass[i] << " ";
+                outfile << std::endl;
+            }
+            outfile.close();
+        });
+
+    // run timing experiment
+    for (; trial_number < num_trials; trial_number++) {
+        // TODO start timing infrastructure
         sim.Step();
-        // save every save_interval frames
-        if (i % params.save_interval == 0) {
-            sim.Save();
-        }
+        // TODO stop timing infrastructure
+        sim.Save();
     }
-
-    GifEnd(&gif_writer);
 
     return 0;
 }

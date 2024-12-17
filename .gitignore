@@ -1,5 +1,8 @@
 .DS_Store
 build/*
 !build/.gitkeep
+out/*
+!out/.gitkeep
 .vscode/
 .cache
+venv
