@@ -1,10 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
 import argparse
 import sys
 
 
 def parse(filename):
+    print(filename)
     with open(filename) as f:
         method = f.readline().strip()
         n = int(f.readline())
@@ -29,11 +31,21 @@ def main(filenames):
         size = 50 * (mass - np.min(mass)) / np.max(mass) + 5
         color = np.linalg.norm(np.stack([ax, ay]), axis=0)
         plt.scatter(x, y, s=size, c=color)
-        print(ax, ay)
         quiver = plt.quiver(x, y, ax / color, ay / color, color, alpha=0.5)
         plt.title(f"particles and accelerations for {method} method")
-        plt.xlabel("x coordinate (m)")
-        plt.ylabel("y coordinate (m)")
+        # move axis scaling into the labels
+        # see https://stackoverflow.com/a/45766598
+        ax = plt.gca()
+        ax.figure.canvas.draw()
+        formatter = ScalarFormatter(useMathText=True)
+        ax.xaxis.set_major_formatter(formatter)
+        ax.yaxis.set_major_formatter(formatter)
+        x_scale = int(ax.xaxis.get_offset_text().get_text()[2:])
+        y_scale = int(ax.yaxis.get_offset_text().get_text()[2:])
+        ax.xaxis.offsetText.set_visible(False)
+        ax.yaxis.offsetText.set_visible(False)
+        plt.xlabel(f"x coordinate (m $\\times 10^{{{x_scale}}}$)")
+        plt.ylabel(f"y coordinate (m $\\times 10^{{{y_scale}}}$)")
         plt.colorbar(quiver, label="acceleration ($m/s^2$)")
         plt.tight_layout()
         plt.savefig(outfile)
