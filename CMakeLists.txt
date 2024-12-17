@@ -16,8 +16,7 @@ FetchContent_Declare(argparse
 FetchContent_MakeAvailable(argparse)
 
 # (external) glm for vector types and operations
-FetchContent_Declare(
-	glm
+FetchContent_Declare(glm
 	GIT_REPOSITORY	https://github.com/g-truc/glm.git
 	GIT_TAG 	bf71a834948186f4097caa076cd2663c69a10e1e #refs/tags/1.0.1
 )
