@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include <argparse/argparse.hpp>
+#include <cstdlib>
 #include <fstream>
 #include <glm/exponential.hpp>
 #include <glm/ext/scalar_common.hpp>
@@ -46,7 +47,12 @@ class ParticleGenerator {
 int main(int argc, char *argv[]) {
     nbody::SimParams params;
     int num_trials = 0;
+    std::string method_string;
     argparse::ArgumentParser program("nbody");
+    program.add_argument("-m", "--method")
+        .default_value("naive")
+        .store_into(method_string)
+        .help("Method to use, either naive or barnes-hut.");
     program.add_argument("-w", "--grid-width")
         .scan<'i', size_t>()
         .default_value<size_t>(100)
@@ -73,7 +79,17 @@ int main(int argc, char *argv[]) {
     } catch (const std::exception &err) {
         std::cerr << err.what() << std::endl;
         std::cerr << program;
-        std::exit(1);
+        std::exit(EXIT_FAILURE);
+    }
+
+    // handle method string
+    if (method_string == "naive") {
+        params.method = nbody::Method::kNaive;
+    } else if (method_string == "barnes-hut") {
+        params.method = nbody::Method::kBarnesHut;
+    } else {
+        fprintf(stderr, "Unknown method %s", method_string.c_str());
+        exit(EXIT_FAILURE);
     }
 
     auto gen = ParticleGenerator(params);
@@ -81,13 +97,14 @@ int main(int argc, char *argv[]) {
 
     int trial_number = 0;
     sim.RegisterSaveHandler(
-        [&trial_number](std::vector<nbody::Particle> particles, nbody::Grid grid) {
+        [&params, &trial_number](std::vector<nbody::Particle> particles,
+                                 nbody::Grid grid) {
             // create filename with date, time, and trial number
             auto time = std::time(nullptr);
             std::stringstream ss;
             ss << "out/";
             // see https://stackoverflow.com/a/45419863
-            ss << std::put_time(std::gmtime(&time), "%F %T%z") << " " << trial_number;
+            ss << std::put_time(std::gmtime(&time), "%F %T") << " " << trial_number;
             ss << ".out";
             std::string filename = ss.str();
 
@@ -95,6 +112,7 @@ int main(int argc, char *argv[]) {
             printf("saving to file at \"%s\"\n", filename.c_str());
             std::ofstream outfile;
             outfile.open(filename);
+            outfile << to_string(params.method) << std::endl;
             outfile << particles.size() << std::endl;
             outfile << grid.x << " ";
             outfile << grid.y << " ";

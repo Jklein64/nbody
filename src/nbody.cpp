@@ -36,7 +36,12 @@ NBodySim::NBodySim(const SimParams& params, const std::function<Particle()>& sam
 void NBodySim::Step() {
     for (size_t i = 0; i < particles.size(); ++i) {
         // compute force that this particle receives
-        float f = CalcForceNaive(i);
+        float f = 0.0f;
+        if (params.method == Method::kNaive) {
+            f = CalcForceNaive(i);
+        } else {
+            f = CalcForceBarnesHut(i);
+        }
 
         // in theory, leapfrog integration would go here
     }
