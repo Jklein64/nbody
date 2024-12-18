@@ -2,9 +2,9 @@
 
 namespace nbody {
 
-float Grid::Get(size_t i, size_t j) { return data[i * width + j]; }
+float Grid::Get(size_t i, size_t j) const { return data[i * width + j]; }
 
-float Grid::Get(std::pair<size_t, size_t> idx) {
+float Grid::Get(std::pair<size_t, size_t> idx) const {
     return Grid::Get(idx.first, idx.second);
 }
 
@@ -14,7 +14,7 @@ void Grid::Set(std::pair<size_t, size_t> idx, float value) {
     return Grid::Set(idx.first, idx.second, value);
 }
 
-std::pair<size_t, size_t> Grid::Snap(glm::vec2 pos) {
+std::pair<size_t, size_t> Grid::Snap(glm::vec2 pos) const {
     return std::make_pair(static_cast<size_t>((pos.y - this->y) / scale),
                           static_cast<size_t>((pos.x - this->x) / scale));
 }

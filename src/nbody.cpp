@@ -1,6 +1,7 @@
-#include "nbody.h"
-
 #include <glm/geometric.hpp>
+
+#include "nbody.h"
+#include "quadtree.h"
 
 namespace nbody {
 
@@ -79,9 +80,13 @@ glm::vec2 NBodySim::CalcAccelBarnesHut(size_t i) {
         grid.Set(idx, grid.Get(idx) + particles.mass[i]);
     }
 
-    // TODO build quadtree on grid
+    // build quadtree on grid
+    QuadTree tree(grid);
+    tree.Build(particles.pos, particles.mass);
 
-    // TODO use quadtree to compute force
+    // use quadtree to compute force
+    const float theta = 0.5f; // Barnes-Hut opening parameter
+    accel = tree.CalcAccel(i, particles.pos[i], particles.mass[i], theta);
 
     return accel;
 }

@@ -17,11 +17,11 @@ struct Grid {
     // indices[i * ncols + j] is a list of indices of particles contained in cell i, j
     std::vector<std::vector<size_t>> indices;
 
-    float Get(size_t i, size_t j);
-    float Get(std::pair<size_t, size_t> idx);
+    float Get(size_t i, size_t j) const;
+    float Get(std::pair<size_t, size_t> idx) const;
     void Set(size_t i, size_t j, float value);
     void Set(std::pair<size_t, size_t> idx, float value);
-    std::pair<size_t, size_t> Snap(glm::vec2 pos);
+    std::pair<size_t, size_t> Snap(glm::vec2 pos) const;
 
     // (Re)configures this grid to fit the bbox with a in top left and b in bottom right
     void Configure(float scale, glm::vec2 a, glm::vec2 b);
