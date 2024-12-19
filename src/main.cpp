@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include <argparse/argparse.hpp>
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
 #include <glm/exponential.hpp>
@@ -15,12 +16,14 @@
 #include "nbody.h"
 
 using json = nlohmann::json;
+using Clock = std::chrono::steady_clock;
+using Second = std::chrono::duration<double, std::ratio<1>>;
 
 class ParticleGenerator {
     // see https://en.cppreference.com/w/cpp/numeric/random/normal_distribution
     std::random_device rd;
     std::seed_seq seed{0};
-    std::mt19937 gen{seed};
+    std::mt19937 gen{rd()};
 
     std::uniform_real_distribution<float> uniform_r;
     std::uniform_real_distribution<float> uniform_theta;
@@ -122,7 +125,7 @@ int main(int argc, char *argv[]) {
             }
 
             // create file and save data
-            printf("saving to file at \"%s\"\n", filename.c_str());
+            // printf("saving to file at \"%s\"\n", filename.c_str());
             std::ofstream outfile;
             outfile.open(filename);
             outfile << data;
@@ -130,12 +133,23 @@ int main(int argc, char *argv[]) {
         });
 
     // run timing experiment
+    std::chrono::time_point<Clock> m_beg{Clock::now()};
+    std::vector<double> timings;
     for (; trial_number < num_trials; trial_number++) {
         // TODO start timing infrastructure
+        m_beg = Clock::now();
         sim.Step();
+        // https://www.learncpp.com/cpp-tutorial/timing-your-code/
+        timings.push_back(
+            std::chrono::duration_cast<Second>(Clock::now() - m_beg).count());
         // TODO stop timing infrastructure
         sim.Save();
     }
+
+    double avg = 0.0;
+    for (auto t : timings) avg += t;
+    avg /= timings.size();
+    printf("%f\n", avg);
 
     return 0;
 }

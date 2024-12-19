@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
+set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra")
 
 project(nbody
 VERSION 1.0

@@ -158,10 +158,12 @@ void Quadtree::calculateAllAccelerationsFromNode(Node &node) {
 void Quadtree::collect(vector<double> &data, Node &node) {
     if (node.isLeaf && node.containsBody) {
         // We put 6 information in this data array
-        // mass, positions, velocities and ID
-        data.push_back(node.localBody.mass);
-        data.push_back(node.localBody.xPos);
-        data.push_back(node.localBody.yPos);
+        // mass, positions, accel and ID
+        // data.push_back(node.localBody.mass);
+        // data.push_back(node.localBody.xPos);
+        // data.push_back(node.localBody.yPos);
+        data.push_back(node.localBody.xAcc);
+        data.push_back(node.localBody.yAcc);
 
         int nbrIdSmaller = 0;
         for (unsigned int i = 0; i < idCollision.size(); i++) {
@@ -170,7 +172,7 @@ void Quadtree::collect(vector<double> &data, Node &node) {
             }
         }
 
-        data.push_back(node.localBody.id - nbrIdSmaller);
+        // data.push_back(node.localBody.id - nbrIdSmaller);
     } else if (!node.isLeaf && node.containsBody) {
         collect(data, *node.northEast);
         collect(data, *node.northWest);

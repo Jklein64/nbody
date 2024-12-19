@@ -66,6 +66,11 @@ void NBodySim::CalcAccelBarnesHut() {
     for (auto b : bodies) {
         printf("%f", b->xAcc);
     }
+    std::vector<double> data;
+    tree.collect(data, tree.root);
+    for (int i = 0; i < data.size(); i++) {
+        printf("%f, ", data[i]);
+    }
 }
 
 void NBodySim::Save() { save_handler(particles, grid); }
