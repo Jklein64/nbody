@@ -1,23 +1,28 @@
 #pragma once
 
 #include <glm/vec2.hpp>
-#include <unordered_map>
+#include <memory>
+#include <vector>
 
-#include "morton.h"
 #include "nbody.h"
 
 namespace nbody {
+
 // spans a power-of-two-squared region of grid cells;
 // leaf nodes are single grid cells
 struct Node {
-    morton::MortonKey key;
-    glm::vec2 com;  // center of mass of contained bodies
-    float mass;     // total mass of contained bodies
+    glm::vec2 com;              // center of mass of contained bodies
+    int com_n;                  // count for cumulative average
+    glm::vec2 center;           // geometric center, for bounds testing
+    float size;                 // length of a side
+    float mass;                 // total mass of contained bodies
+    std::array<int, 4> bodies;  // bodies[i] for quadrant i
+    std::array<std::shared_ptr<Node>, 4> quadrants;
 };
 
 class Quadtree {
-    float theta, scale;
-    std::unordered_map<morton::MortonKey, Node> hashtbl;
+    float theta;
+    std::shared_ptr<Node> root;
     const nbody::Particles& particles;
 
     // evaluates the Multipole Acceptance Criterion
@@ -35,11 +40,10 @@ class Quadtree {
     // retrieves the i'th child of the node for i = 0...3
     Node& NodeChild(const Node& node, int i) const;
 
-    Node* Get(morton::MortonKey key);
-    void Set(morton::MortonKey key, const Node& node);
+    int CalcQuadrant(const Node& node, const glm::vec2& pos) const;
 
    public:
-    Quadtree(float theta, const nbody::Grid& grid, const nbody::Particles& particles);
+    Quadtree(float theta, const nbody::Particles& particles);
     glm::vec2 CalcAccel(size_t i) const;
 };
 

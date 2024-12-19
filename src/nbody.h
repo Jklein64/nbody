@@ -57,6 +57,22 @@ class NBodySim {
 
     SaveHandler save_handler;
 };
+
+inline std::pair<glm::vec2, glm::vec2> bbox(const Particles& particles) {
+    float x_min = std::numeric_limits<float>::max();
+    float x_max = std::numeric_limits<float>::min();
+    float y_min = std::numeric_limits<float>::max();
+    float y_max = std::numeric_limits<float>::min();
+    for (auto& pos : particles.pos) {
+        x_min = std::min(x_min, pos.x);
+        x_max = std::max(x_max, pos.x);
+        y_min = std::min(y_min, pos.y);
+        y_max = std::max(y_max, pos.y);
+    }
+
+    return std::make_pair(glm::vec2(x_min, y_min), glm::vec2(x_max, y_max));
+}
+
 }  // namespace nbody
 
 inline std::string to_string(nbody::Method m) {

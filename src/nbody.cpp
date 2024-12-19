@@ -9,21 +9,6 @@ namespace nbody {
 // const float GRID_SCALE = 1e8f;
 const float GRID_SCALE = 6e9f;
 
-std::pair<glm::vec2, glm::vec2> bbox(const Particles& particles) {
-    float x_min = std::numeric_limits<float>::max();
-    float x_max = std::numeric_limits<float>::min();
-    float y_min = std::numeric_limits<float>::max();
-    float y_max = std::numeric_limits<float>::min();
-    for (auto& pos : particles.pos) {
-        x_min = std::min(x_min, pos.x);
-        x_max = std::max(x_max, pos.x);
-        y_min = std::min(y_min, pos.y);
-        y_max = std::max(y_max, pos.y);
-    }
-
-    return std::make_pair(glm::vec2(x_min, y_min), glm::vec2(x_max, y_max));
-}
-
 NBodySim::NBodySim(const SimParams& params,
                    const std::function<std::pair<glm::vec2, float>()>& sampler)
     : params(params) {
@@ -80,7 +65,6 @@ void NBodySim::CalcAccelBarnesHut() {
     for (size_t i = 0; i < params.particle_count; ++i) {
         // compute force that this particle receives
         glm::vec2 accel = tree.CalcAccel(i);
-        // particles.accel[i] = accel;
     }
 }
 
