@@ -2,7 +2,7 @@
 
 #include <glm/geometric.hpp>
 
-#include "quadtree.h"
+// #include "quadtree.h"
 
 namespace nbody {
 
@@ -61,10 +61,10 @@ void NBodySim::CalcAccelBarnesHut() {
         grid.Set(idx, grid.Get(idx) + particles.mass[i]);
     }
 
-    Quadtree tree(0.5f, grid, particles);
+    // Quadtree tree(0.5f, grid, particles);
     for (size_t i = 0; i < params.particle_count; ++i) {
         // compute force that this particle receives
-        glm::vec2 accel = tree.CalcAccel(i);
+        // glm::vec2 accel = tree.CalcAccel(i);
     }
 }
 
