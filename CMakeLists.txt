@@ -29,15 +29,7 @@ FetchContent_Declare(json
 )
 FetchContent_MakeAvailable(json)
 
-# library
-file(GLOB lib_files CONFIGURE_DEPENDS lib/*.cpp)
-add_library(lib ${lib_files})
-target_include_directories(lib PUBLIC include)
-target_compile_features(lib PUBLIC cxx_std_11)
-target_link_libraries(lib PUBLIC glm::glm)
-
 # serial executable
 file(GLOB src_files CONFIGURE_DEPENDS src/*.cpp src/*.h)
 add_executable(nbody ${src_files})
-target_link_libraries(nbody PUBLIC lib)
-target_link_libraries(nbody PRIVATE argparse  nlohmann_json::nlohmann_json)
+target_link_libraries(nbody PRIVATE argparse glm::glm nlohmann_json::nlohmann_json)
