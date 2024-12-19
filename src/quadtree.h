@@ -16,7 +16,7 @@ struct Node {
 };
 
 class Quadtree {
-    float theta;
+    float theta, scale;
     std::unordered_map<morton::MortonKey, Node> hashtbl;
     const nbody::Particles& particles;
 

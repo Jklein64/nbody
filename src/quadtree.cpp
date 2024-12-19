@@ -8,11 +8,13 @@
 namespace nbody {
 Quadtree::Quadtree(float theta, const nbody::Grid& grid,
                    const nbody::Particles& particles)
-    : theta(theta), particles(particles) {
+    : theta(theta), particles(particles), scale(grid.scale) {
     // build the quadtree
 }
 
-bool Quadtree::MAC(const glm::vec2& pos, const Node& n) const { return false; }
+bool Quadtree::MAC(const glm::vec2& pos, const Node& n) const {
+    return NodeSize(n) / (pos - n.com).length() < theta;
+}
 
 int Quadtree::NodeLevel(const Node& node) const { return 0; }
 
