@@ -2,6 +2,8 @@
 
 namespace nbody {
 
+Grid::Grid() : scale(0), height(0), width(0), x(0), y(0), nrows(0), ncols(0) {}
+
 float Grid::Get(size_t i, size_t j) const { return data[i * width + j]; }
 
 float Grid::Get(std::pair<size_t, size_t> idx) const {
@@ -15,8 +17,8 @@ void Grid::Set(std::pair<size_t, size_t> idx, float value) {
 }
 
 std::pair<size_t, size_t> Grid::Snap(glm::vec2 pos) const {
-    return std::make_pair(static_cast<size_t>((pos.y - this->y) / scale),
-                          static_cast<size_t>((pos.x - this->x) / scale));
+    return std::make_pair(static_cast<size_t>((pos.y - this->y) / scale + 0.5f),
+                          static_cast<size_t>((pos.x - this->x) / scale + 0.5f));
 }
 
 size_t next_pow_two(size_t i) {

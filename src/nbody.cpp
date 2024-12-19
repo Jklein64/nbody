@@ -7,7 +7,8 @@
 namespace nbody {
 
 const float G = 6.67430e-11f;
-const float GRID_SCALE = 1e8f;
+// const float GRID_SCALE = 1e8f;
+const float GRID_SCALE = 6e9f;
 
 void bbox(const Particles& particles, glm::vec2* a, glm::vec2* b) {
     float x_min = std::numeric_limits<float>::max();

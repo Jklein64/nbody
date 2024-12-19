@@ -17,6 +17,8 @@ struct Grid {
     // indices[i * ncols + j] is a list of indices of particles contained in cell i, j
     std::vector<std::vector<size_t>> indices;
 
+    Grid();
+
     float Get(size_t i, size_t j) const;
     float Get(std::pair<size_t, size_t> idx) const;
     void Set(size_t i, size_t j, float value);

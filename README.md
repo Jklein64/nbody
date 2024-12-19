@@ -38,7 +38,7 @@ For usage instructions.
 
 ## Notes
 
-This application uses a cartesian coordinate system, so +y is up and +x is to the right.
+This application uses a cartesian coordinate system, so +y is up and +x is to the right. Indices refer to the centers of cells.
 
 ## Resources
 

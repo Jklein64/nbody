@@ -109,8 +109,9 @@ int main(int argc, char *argv[]) {
             json data;
             data["method"] = to_string(params.method);
             data["grid"] = {
-                {"x", grid.x},      {"y", grid.y},         {"w", grid.width},
-                {"h", grid.height}, {"nrows", grid.nrows}, {"ncols", grid.ncols},
+                {"scale", grid.scale}, {"x", grid.x},      {"y", grid.y},
+                {"w", grid.width},     {"h", grid.height}, {"nrows", grid.nrows},
+                {"ncols", grid.ncols},
             };
             for (size_t i = 0; i < params.particle_count; ++i) {
                 data["particles"]["x"].push_back(particles.pos[i].x);
