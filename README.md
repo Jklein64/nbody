@@ -36,6 +36,10 @@ For usage instructions.
 - [ ] Barnes-Hut using Z-Morton-based quadtree
 - [ ] MPI shenanigans
 
+## Notes
+
+This application uses a cartesian coordinate system, so +y is up and +x is to the right.
+
 ## Resources
 
 - https://periodicos.univali.br/index.php/acotb/article/view/19492
