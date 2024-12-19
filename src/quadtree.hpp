@@ -6,15 +6,12 @@
 #include "body.hpp"
 #include "node.hpp"
 
-#define G 6.674e-11
-
 class Quadtree {
    public:
     // Empty Constructor
     Quadtree();
     // Constructor with position, size and time step
-    Quadtree(double x, double y, double max, double min, double timeStep,
-             double precision);
+    Quadtree(double x, double y, double max, double min, double precision);
     // Destructor
     ~Quadtree();
 

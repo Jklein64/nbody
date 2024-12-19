@@ -1,7 +1,7 @@
 #ifndef BODY_H
 #define BODY_H
 
-#define G 6.674e-11
+// #define G 6.674e-11
 
 // Class defining body stored in nodes of the tree
 class Body {

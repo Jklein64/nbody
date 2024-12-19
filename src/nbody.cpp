@@ -2,7 +2,7 @@
 
 #include <glm/geometric.hpp>
 
-// #include "quadtree.h"
+#include "quadtree.hpp"
 
 namespace nbody {
 
@@ -53,18 +53,18 @@ void NBodySim::CalcAccelNaive() {
 void NBodySim::CalcAccelBarnesHut() {
     // bounding box coords (origin is in the top left)
     auto [a, b] = bbox(particles);
-
-    // initialize grid based on particles
-    grid.Configure(GRID_SCALE, a, b);
-    for (size_t i = 0; i < params.particle_count; i++) {
-        auto idx = grid.Snap(particles.pos[i]);
-        grid.Set(idx, grid.Get(idx) + particles.mass[i]);
+    Quadtree tree(a.x, a.y, b.x - a.x, b.y - a.y, 0.5);
+    // add the bodies
+    std::vector<std::shared_ptr<Body>> bodies;
+    for (int i = 0; i < params.particle_count; ++i) {
+        auto b = std::make_shared<Body>(particles.mass[i], particles.pos[i].x,
+                                        particles.pos[i].y);
+        bodies.push_back(b);
+        tree.insertBody(*b, tree.root);
     }
-
-    // Quadtree tree(0.5f, grid, particles);
-    for (size_t i = 0; i < params.particle_count; ++i) {
-        // compute force that this particle receives
-        // glm::vec2 accel = tree.CalcAccel(i);
+    tree.calculateAllAccelerationsFromNode(tree.root);
+    for (auto b : bodies) {
+        printf("%f", b->xAcc);
     }
 }
 

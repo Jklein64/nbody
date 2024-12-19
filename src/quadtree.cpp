@@ -8,9 +8,8 @@ using namespace std;
 Quadtree::Quadtree(){};
 
 // Constructor with position, size and time step
-Quadtree::Quadtree(double x, double y, double max, double min, double timeStep,
-                   double precision)
-    : dt(timeStep), theta(precision), minSize(min) {
+Quadtree::Quadtree(double x, double y, double max, double min, double precision)
+    : theta(precision), minSize(min) {
     // We need to put 2 times the size because we want to go from -size to +size
     root = Node(x, y, 2.0 * max, 2.0 * max);
 }
@@ -163,8 +162,6 @@ void Quadtree::collect(vector<double> &data, Node &node) {
         data.push_back(node.localBody.mass);
         data.push_back(node.localBody.xPos);
         data.push_back(node.localBody.yPos);
-        data.push_back(node.localBody.xVel);
-        data.push_back(node.localBody.yVel);
 
         int nbrIdSmaller = 0;
         for (unsigned int i = 0; i < idCollision.size(); i++) {

@@ -1,9 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include "Body.hpp"
-
-#define G 6.674e-11
+#include "body.hpp"
 
 class Node {
    public:

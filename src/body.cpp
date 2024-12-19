@@ -6,6 +6,8 @@
 
 using namespace std;
 
+const float G = 6.67430e-11f;
+
 // Empty Constructor
 Body::Body(){};
 
