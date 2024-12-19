@@ -10,6 +10,7 @@ namespace morton {
 using MortonKey = uint64_t;
 
 MortonKey encode(nbody::GridIndex i, nbody::GridIndex j);
+MortonKey encode(std::pair<nbody::GridIndex, nbody::GridIndex> idx);
 
 std::pair<nbody::GridIndex, nbody::GridIndex> decode(MortonKey k);
 

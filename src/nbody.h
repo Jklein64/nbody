@@ -12,6 +12,8 @@
 
 namespace nbody {
 
+const float G = 6.67430e-11f;
+
 typedef struct Particles {
     std::vector<float> mass;
     std::vector<glm::vec2> pos;
@@ -45,8 +47,8 @@ class NBodySim {
              const std::function<std::pair<glm::vec2, float>()>& sampler);
     void Step();
     void Save();
-    glm::vec2 CalcAccelNaive(size_t i);
-    glm::vec2 CalcAccelBarnesHut(size_t i);
+    void CalcAccelNaive();
+    void CalcAccelBarnesHut();
     void RegisterSaveHandler(SaveHandler handler);
 
    private:
@@ -55,7 +57,6 @@ class NBodySim {
 
     SaveHandler save_handler;
 };
-
 }  // namespace nbody
 
 inline std::string to_string(nbody::Method m) {

@@ -29,6 +29,10 @@ MortonKey encode(nbody::GridIndex i, nbody::GridIndex j) {
     return key;
 }
 
+MortonKey encode(std::pair<nbody::GridIndex, nbody::GridIndex> idx) {
+    return encode(idx.first, idx.second);
+}
+
 std::pair<nbody::GridIndex, nbody::GridIndex> decode(MortonKey key) {
     // zero out for bit_set
     nbody::GridIndex i = 0, j = 0;

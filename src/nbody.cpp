@@ -6,11 +6,10 @@
 
 namespace nbody {
 
-const float G = 6.67430e-11f;
 // const float GRID_SCALE = 1e8f;
 const float GRID_SCALE = 6e9f;
 
-void bbox(const Particles& particles, glm::vec2* a, glm::vec2* b) {
+std::pair<glm::vec2, glm::vec2> bbox(const Particles& particles) {
     float x_min = std::numeric_limits<float>::max();
     float x_max = std::numeric_limits<float>::min();
     float y_min = std::numeric_limits<float>::max();
@@ -22,8 +21,7 @@ void bbox(const Particles& particles, glm::vec2* a, glm::vec2* b) {
         y_max = std::max(y_max, pos.y);
     }
 
-    *a = glm::vec2(x_min, y_min);
-    *b = glm::vec2(x_max, y_max);
+    return std::make_pair(glm::vec2(x_min, y_min), glm::vec2(x_max, y_max));
 }
 
 NBodySim::NBodySim(const SimParams& params,
@@ -41,39 +39,35 @@ NBodySim::NBodySim(const SimParams& params,
 }
 
 void NBodySim::Step() {
+    if (params.method == Method::kNaive) {
+        CalcAccelNaive();
+    } else {
+        CalcAccelBarnesHut();
+    }
+
+    // in theory, leapfrog integration would go here
+}
+
+void NBodySim::CalcAccelNaive() {
     for (size_t i = 0; i < params.particle_count; ++i) {
         // compute force that this particle receives
         glm::vec2 accel = glm::vec2();
-        if (params.method == Method::kNaive) {
-            accel = CalcAccelNaive(i);
-        } else {
-            accel = CalcAccelBarnesHut(i);
+        for (size_t j = 0; j < params.particle_count; ++j) {
+            if (j == i) continue;
+            auto p1 = particles.pos[i];
+            auto p2 = particles.pos[j];
+            float r_squared =
+                (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
+            accel += (G * particles.mass[j] / r_squared) * glm::normalize(p2 - p1);
         }
 
         particles.accel[i] = accel;
-        // in theory, leapfrog integration would go here
     }
 }
 
-glm::vec2 NBodySim::CalcAccelNaive(size_t i) {
-    glm::vec2 accel = glm::vec2();
-    for (size_t j = 0; j < params.particle_count; ++j) {
-        if (j == i) continue;
-        auto p1 = particles.pos[i];
-        auto p2 = particles.pos[j];
-        float r_squared = (p1.x - p2.x) * (p1.x - p2.x) + (p1.y - p2.y) * (p1.y - p2.y);
-        accel += (G * particles.mass[j] / r_squared) * glm::normalize(p2 - p1);
-    }
-
-    return accel;
-}
-
-glm::vec2 NBodySim::CalcAccelBarnesHut(size_t i) {
-    glm::vec2 accel;
-
+void NBodySim::CalcAccelBarnesHut() {
     // bounding box coords (origin is in the top left)
-    glm::vec2 a, b;
-    bbox(particles, &a, &b);
+    auto [a, b] = bbox(particles);
 
     // initialize grid based on particles
     grid.Configure(GRID_SCALE, a, b);
@@ -82,15 +76,12 @@ glm::vec2 NBodySim::CalcAccelBarnesHut(size_t i) {
         grid.Set(idx, grid.Get(idx) + particles.mass[i]);
     }
 
-    // build quadtree on grid
-    QuadTree tree(grid);
-    tree.Build(particles.pos, particles.mass);
-
-    // use quadtree to compute force
-    const float theta = 0.5f;  // Barnes-Hut opening parameter
-    accel = tree.CalcAccel(i, particles.pos[i], particles.mass[i], theta);
-
-    return accel;
+    Quadtree tree(0.5f, grid, particles);
+    for (size_t i = 0; i < params.particle_count; ++i) {
+        // compute force that this particle receives
+        glm::vec2 accel = tree.CalcAccel(i);
+        // particles.accel[i] = accel;
+    }
 }
 
 void NBodySim::Save() { save_handler(particles, grid); }
