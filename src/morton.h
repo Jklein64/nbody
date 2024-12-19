@@ -3,13 +3,15 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "grid.h"
+
 namespace morton {
 
 using MortonKey = uint64_t;
 
 MortonKey encode(uint32_t i, uint32_t j);
 
-void decode(MortonKey k, size_t* i, size_t* j);
+void decode(MortonKey k, nbody::GridIndex* i, nbody::GridIndex* j);
 
 int compare(MortonKey a, MortonKey b);
 

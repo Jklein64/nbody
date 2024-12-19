@@ -1,18 +1,20 @@
 #include "morton.h"
 
+#include <assert.h>
+
 #include "grid.h"
 
 namespace morton {
 
 template <typename T>
-bool bit_get(const T& v, size_t i) {
-    return v & (1 << i);
+bool bit_get(const T& v, int i) {
+    return (v >> i) & 1;
 }
 
 template <typename T>
 void bit_set(T& v, size_t i, bool b) {
     // assumes all modifiable bits in v are zero
-    v |= (((int)b) << i);
+    v |= (int)b << i;
 }
 
 MortonKey encode(nbody::GridIndex i, nbody::GridIndex j) {
@@ -31,9 +33,7 @@ MortonKey encode(nbody::GridIndex i, nbody::GridIndex j) {
 
 void decode(MortonKey key, nbody::GridIndex* i, nbody::GridIndex* j) {
     // zero out for bit_set
-    *i = 0;
-    *j = 0;
-
+    *i = *j = 0;
     for (int k = 0; k < 31; k++) {
         bit_set(*i, k, bit_get(key, 2 * k));
         bit_set(*j, k, bit_get(key, 2 * k + 1));
