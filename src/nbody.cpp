@@ -1,12 +1,13 @@
+#include "nbody.h"
+
 #include <glm/geometric.hpp>
 
-#include "nbody.h"
 #include "quadtree.h"
 
 namespace nbody {
 
 const float G = 6.67430e-11f;
-const float GRID_SCALE = 2.9919574140000e13f;
+const float GRID_SCALE = 1e8f;
 
 void bbox(const Particles& particles, glm::vec2* a, glm::vec2* b) {
     float x_min = std::numeric_limits<float>::max();
@@ -85,7 +86,7 @@ glm::vec2 NBodySim::CalcAccelBarnesHut(size_t i) {
     tree.Build(particles.pos, particles.mass);
 
     // use quadtree to compute force
-    const float theta = 0.5f; // Barnes-Hut opening parameter
+    const float theta = 0.5f;  // Barnes-Hut opening parameter
     accel = tree.CalcAccel(i, particles.pos[i], particles.mass[i], theta);
 
     return accel;

@@ -8,15 +8,19 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/trigonometric.hpp>
 #include <glm/vec3.hpp>
+#include <nlohmann/json.hpp>
 #include <random>
 
 #include "grid.h"
 #include "nbody.h"
 
+using json = nlohmann::json;
+
 class ParticleGenerator {
     // see https://en.cppreference.com/w/cpp/numeric/random/normal_distribution
-    std::random_device rd{};
-    std::mt19937 gen{rd()};
+    std::random_device rd;
+    std::seed_seq seed{0};
+    std::mt19937 gen{seed};
 
     std::uniform_real_distribution<float> uniform_r;
     std::uniform_real_distribution<float> uniform_theta;
@@ -42,8 +46,9 @@ int main(int argc, char *argv[]) {
     int num_trials = 0;
     std::string method_string;
     argparse::ArgumentParser program("nbody");
-    program.add_argument("-m", "--method")
-        .default_value("naive")
+    program
+        .add_argument("-m", "--method")
+        // .default_value("naive")
         .store_into(method_string)
         .help("Method to use, either naive or barnes-hut.");
     program.add_argument("-w", "--grid-width")
@@ -81,7 +86,7 @@ int main(int argc, char *argv[]) {
     } else if (method_string == "barnes-hut") {
         params.method = nbody::Method::kBarnesHut;
     } else {
-        fprintf(stderr, "Unknown method %s", method_string.c_str());
+        fprintf(stderr, "Unknown method \"%s\"\n", method_string.c_str());
         exit(EXIT_FAILURE);
     }
 
@@ -97,28 +102,29 @@ int main(int argc, char *argv[]) {
             ss << "out/";
             // see https://stackoverflow.com/a/45419863
             ss << std::put_time(std::gmtime(&time), "%F %T") << " " << trial_number;
-            ss << ".out";
+            ss << ".json";
             std::string filename = ss.str();
+
+            // create json object to save
+            json data;
+            data["method"] = to_string(params.method);
+            data["grid"] = {
+                {"x", grid.x},      {"y", grid.y},         {"w", grid.width},
+                {"h", grid.height}, {"nrows", grid.nrows}, {"ncols", grid.ncols},
+            };
+            for (size_t i = 0; i < params.particle_count; ++i) {
+                data["particles"]["x"].push_back(particles.pos[i].x);
+                data["particles"]["y"].push_back(particles.pos[i].y);
+                data["particles"]["a_x"].push_back(particles.accel[i].x);
+                data["particles"]["a_y"].push_back(particles.accel[i].y);
+                data["particles"]["mass"].push_back(particles.mass[i]);
+            }
 
             // create file and save data
             printf("saving to file at \"%s\"\n", filename.c_str());
             std::ofstream outfile;
             outfile.open(filename);
-            outfile << to_string(params.method) << std::endl;
-            outfile << params.particle_count << std::endl;
-            outfile << grid.x << " ";
-            outfile << grid.y << " ";
-            outfile << grid.width << " ";
-            outfile << grid.height;
-            outfile << std::endl;
-            for (size_t i = 0; i < params.particle_count; ++i) {
-                outfile << particles.pos[i].x << " ";
-                outfile << particles.pos[i].y << " ";
-                outfile << particles.accel[i].x << " ";
-                outfile << particles.accel[i].y << " ";
-                outfile << particles.mass[i] << " ";
-                outfile << std::endl;
-            }
+            outfile << data;
             outfile.close();
         });
 
