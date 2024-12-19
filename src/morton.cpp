@@ -1,7 +1,5 @@
 #include "morton.h"
 
-#include <assert.h>
-
 #include "grid.h"
 
 namespace morton {
@@ -31,13 +29,14 @@ MortonKey encode(nbody::GridIndex i, nbody::GridIndex j) {
     return key;
 }
 
-void decode(MortonKey key, nbody::GridIndex* i, nbody::GridIndex* j) {
+std::pair<nbody::GridIndex, nbody::GridIndex> decode(MortonKey key) {
     // zero out for bit_set
-    *i = *j = 0;
+    nbody::GridIndex i = 0, j = 0;
     for (int k = 0; k < 31; k++) {
-        bit_set(*i, k, bit_get(key, 2 * k));
-        bit_set(*j, k, bit_get(key, 2 * k + 1));
+        bit_set(i, k, bit_get(key, 2 * k));
+        bit_set(j, k, bit_get(key, 2 * k + 1));
     }
+    return std::make_pair(i, j);
 }
 
 int compare(MortonKey a, MortonKey b) {

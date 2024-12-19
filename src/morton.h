@@ -9,9 +9,9 @@ namespace morton {
 
 using MortonKey = uint64_t;
 
-MortonKey encode(uint32_t i, uint32_t j);
+MortonKey encode(nbody::GridIndex i, nbody::GridIndex j);
 
-void decode(MortonKey k, nbody::GridIndex* i, nbody::GridIndex* j);
+std::pair<nbody::GridIndex, nbody::GridIndex> decode(MortonKey k);
 
 int compare(MortonKey a, MortonKey b);
 
