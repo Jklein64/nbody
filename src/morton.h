@@ -5,7 +5,7 @@
 
 namespace morton {
 
-typedef uint64_t MortonKey;
+using MortonKey = uint64_t;
 
 MortonKey encode(uint32_t i, uint32_t j);
 
@@ -15,7 +15,7 @@ int compare(MortonKey a, MortonKey b);
 
 MortonKey parent(MortonKey key);
 
-MortonKey firstChild(MortonKey key);
+MortonKey first_child(MortonKey key);
 
 MortonKey sibling(MortonKey first, int i);
 
